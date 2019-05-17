@@ -46,6 +46,7 @@ SiteCompanyList.prototype = window.$.extend({},
                 .map((companyName) => {
                     let company = this.trackers[companyName]
                     let urlsList = company.urls ? Object.keys(company.urls) : []
+
                     // Unknown same domain trackers need to be individually fetched and put
                     // in the unblocked list
                     if (companyName === 'unknown' && this.hasUnblockedTrackers(company, urlsList)) {
@@ -59,7 +60,16 @@ SiteCompanyList.prototype = window.$.extend({},
                         normalizedName: this.normalizeCompanyName(companyName),
                         count: this._setCount(company, companyName, urlsList),
                         urls: company.urls,
-                        urlsList: urlsList
+                        urlsList: urlsList.map(url => { 
+                            if(company.urls[url].isBlocked === 'ignore') {
+                                const newUrl = `${url} - not blocked`
+                                company.urls[newUrl] = company.urls[url]
+                                delete company.urls[url]
+                                return newUrl
+                            } else {
+                                return url
+                            }
+                        })
                     }
                 }, this)
                 .sort((a, b) => {
@@ -91,13 +101,16 @@ SiteCompanyList.prototype = window.$.extend({},
         spliceUnblockedTrackers: function (company, urlsList) {
             if (!company || !company.urls || !urlsList) return null
 
-            return urlsList.filter((url) => company.urls[url].isBlocked === false)
+            return urlsList.filter((url) => company.urls[url].isBlocked === 'ignore' && 
+                                   (company.urls[url].reason === 'first party' || company.urls[url].reason === 'matched rule - ignore' || company.urls[url].reason === 'matched rule - exception'))
                 .reduce((unblockedTrackers, url) => {
                     unblockedTrackers[url] = company.urls[url]
 
                     // Update the company urls and urlsList
                     delete company.urls[url]
                     urlsList.splice(urlsList.indexOf(url), 1)
+
+                    console.log(unblockedTrackers)
 
                     return unblockedTrackers
                 }, {})
@@ -107,7 +120,8 @@ SiteCompanyList.prototype = window.$.extend({},
         hasUnblockedTrackers: function (company, urlsList) {
             if (!company || !company.urls || !urlsList) return false
 
-            return urlsList.some((url) => company.urls[url].isBlocked === false)
+            return urlsList.some((url) => company.urls[url].isBlocked === 'ignore' && 
+                                 (company.urls[url].reason === 'first party' || company.urls[url].reason === 'matched rule - ignore' || company.urls[url].reason === 'matched rule - exception'))
         },
 
         // Determines sorting order of the company list

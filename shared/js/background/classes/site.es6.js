@@ -91,13 +91,13 @@ class Site {
     isWhiteListed () { return this.whitelisted }
 
     addTracker (tracker) {
-        if (this.trackerUrls.indexOf(tracker.url) === -1) {
-            this.trackerUrls.push(tracker.url)
+        if (this.trackerUrls.indexOf(tracker.tracker.domain) === -1) {
+            this.trackerUrls.push(tracker.tracker.domain)
 
-            if (tracker.block) {
-                this.grade.addEntityBlocked(tracker.parentCompany, tracker.prevalence)
+            if (tracker.action === 'block') {
+                this.grade.addEntityBlocked(tracker.tracker.owner.name,  trackerPrevalence[tracker.tracker.owner.name])
             } else {
-                this.grade.addEntityNotBlocked(tracker.parentCompany, tracker.prevalence)
+                this.grade.addEntityNotBlocked(tracker.tracker.owner.name,  trackerPrevalence[tracker.tracker.owner.name])
             }
         }
     }

@@ -1,4 +1,4 @@
-const trackers = require('./trackers.es6')
+const trackers2 = require('./../../../../privacy-grade/src/trackers.js')
 const utils = require('./utils.es6')
 const https = require('./https.es6')
 const Companies = require('./companies.es6')
@@ -7,7 +7,9 @@ const ATB = require('./atb.es6')
 const browserWrapper = require('./$BROWSER-wrapper.es6')
 
 var debugRequest = false
-utils.loadLists()
+utils.loadLists().then((trackerLists) => {
+    trackers2.addLists(trackerLists)
+})
 
 /**
  * Where most of the extension work happens.
@@ -71,10 +73,10 @@ function handleRequest (requestData) {
             chrome.runtime.sendMessage({'updateTabData': true}, () => chrome.runtime.lastError)
         }
 
-        var tracker = trackers.isTracker(requestData.url, thisTab, requestData)
+        var tracker = trackers2.getTrackerData(requestData.url, thisTab.site.url, requestData)
 
         // count and block trackers. Skip things that matched in the trackersWhitelist unless they're first party
-        if (tracker && !(tracker.type === 'trackersWhitelist' && tracker.reason !== 'first party')) {
+        if (tracker && tracker.tracker && tracker.tracker.owner && tracker.tracker.owner.name) {
             // only count trackers on pages with 200 response. Trackers on these sites are still
             // blocked below but not counted toward company stats
             if (window.safari || thisTab.statusCode === 200) {
@@ -88,32 +90,32 @@ function handleRequest (requestData) {
             browserWrapper.notifyPopup({'updateTabData': true})
 
             // Block the request if the site is not whitelisted
-            if (!thisTab.site.whitelisted && tracker.block) {
+            if (!thisTab.site.whitelisted && tracker.action !== 'ignore' && tracker.reason !== 'first party') {
                 thisTab.addOrUpdateTrackersBlocked(tracker)
 
                 // update badge icon for any requests that come in after
                 // the tab has finished loading
                 if (thisTab.status === 'complete') thisTab.updateBadgeIcon()
 
-                if (tracker.parentCompany !== 'unknown' && thisTab.statusCode === 200) {
-                    Companies.add(tracker.parentCompany)
+                if (tracker.owner && tracker.owner.name !== 'unknown' && thisTab.statusCode === 200) {
+                    Companies.add(tracker.tracker.owner.name)
                 }
 
                 // for debugging specific requests. see test/tests/debugSite.js
                 if (debugRequest && debugRequest.length) {
-                    if (debugRequest.includes(tracker.url)) {
-                        console.log('UNBLOCKED: ', tracker.url)
+                    if (debugRequest.includes(tracker.tracker.domain)) {
+                        console.log('UNBLOCKED: ', tracker.tracker.domain)
                         return
                     }
                 }
 
                 if (!window.safari) {
                     // Initiate hiding of blocked ad DOM elements
-                    trackers.tryElementHide(requestData, thisTab)
+                    //trackers.tryElementHide(requestData, thisTab)
                 }
 
                 console.info('blocked ' + utils.extractHostFromURL(thisTab.url) +
-                             ' [' + tracker.parentCompany + '] ' + requestData.url)
+                             ' [' + tracker.tracker.owner.name + '] ' + requestData.url)
 
                 // return surrogate redirect if match, otherwise
                 // tell Chrome to cancel this webrequest

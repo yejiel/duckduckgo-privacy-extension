@@ -12,14 +12,11 @@ request(requestData, (err, res, body) => {
         return console.log(err);
     }
     
-    let json = JSON.parse(body);
+    let json = require('./../entitylist.json')
     let out = {};
 
     for(let parent in json) {
         json[parent].properties.map(url => {
-            out[url] = parent;
-        });
-        json[parent].resources.map(url => {
             out[url] = parent;
         });
     }

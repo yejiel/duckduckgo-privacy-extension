@@ -1,9 +1,10 @@
 module.exports = {
     "trackerListLoc": "data/tracker_lists",
+    "trackerList": "http://jason.duckduckgo.com/extension.json",
     "blockLists": [
         "trackersWithParentCompany.json"
     ],
-    "entityList": "https://duckduckgo.com/contentblocking.js?l=entitylist2",
+    "entityList": "http://jason.duckduckgo.com/entitylist.json",
     "entityMap": "data/tracker_lists/entityMap.json",
     "blocking": ["Advertising", "Analytics", "Social"],
     "requestListenerTypes": ["main_frame","sub_frame","stylesheet","script","image","object","xmlhttprequest","other"],

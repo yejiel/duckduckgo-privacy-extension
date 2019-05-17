@@ -243,6 +243,9 @@ let onStartup = () => {
         https.sendHttpsUpgradeTotals()
 
         Companies.buildFromStorage()
+
+        // load tracker lists
+        
     })
 }
 

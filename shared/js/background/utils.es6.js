@@ -6,9 +6,18 @@ const browserInfo = parseUserAgentString()
 const load = require('./load.es6')
 
 let entityList = {}
+let trackerLists = {
+    entityList,
+    trackerList: {},
+    surrogates: ''
+}
 
 function loadLists () {
-    load.JSONfromExternalFile(constants.entityList).then((response) => { entityList = response.data })
+    return Promise.all([
+        load.JSONfromExternalFile(constants.entityList).then((response) => { entityList = response.data; trackerLists.entityList = response.data; }),
+        load.JSONfromExternalFile(constants.trackerList).then((response) => { trackerLists.trackerList = response.data }),
+        load.loadExtensionFile({url: constants.surrogateList, source: 'external'}).then((response) => { trackerLists.surrogates = response.data })
+    ]).then(() => trackerLists)
 }
 
 /* Check to see if a company is related to a domain.
