@@ -36,6 +36,15 @@ chrome.webRequest.onBeforeRequest.addListener(
     ['blocking']
 )
 
+// Remove x-client-data headers
+chrome.webRequest.onBeforeSendHeaders.addListener(function (request) { 
+    if (request.requestHeaders) {
+        return {requestHeaders: request.requestHeaders.filter(h => h.name !== 'X-Client-Data')}
+    }
+}, {
+    urls: ['<all_urls>']
+},['requestHeaders', 'extraHeaders', 'blocking']);
+
 chrome.webRequest.onHeadersReceived.addListener(
     (request) => {
         if (request.type === 'main_frame') {
